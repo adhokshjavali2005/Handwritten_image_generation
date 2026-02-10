@@ -11,14 +11,9 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-# -----------------------------
-# Load model
-# -----------------------------
-model = tf.keras.models.load_model("text_to_handwriting.keras")
+model = None   # <-- lazy-loaded
 
-# -----------------------------
 # Text config
-# -----------------------------
 MAX_LEN = 50
 characters = string.ascii_lowercase + string.ascii_uppercase + string.digits + " .,!?'-"
 vocab = sorted(list(set(characters)))
@@ -29,9 +24,12 @@ def encode_text(text):
     seq = [char_to_idx.get(c, 0) for c in text]
     return seq + [0] * (MAX_LEN - len(seq))
 
-# -----------------------------
-# Routes
-# -----------------------------
+def load_model():
+    global model
+    if model is None:
+        print("🔄 Loading model...")
+        model = tf.keras.models.load_model("text_to_handwriting.keras")
+        print("✅ Model loaded")
 
 @app.route("/", methods=["GET"])
 def home():
@@ -44,21 +42,15 @@ def home():
 def health():
     return jsonify({"status": "healthy"})
 
-@app.route("/generate", methods=["POST", "GET"])
+@app.route("/generate", methods=["POST"])
 def generate():
-    # Allow GET for quick testing
-    if request.method == "GET":
-        return jsonify({
-            "message": "Use POST with JSON: { 'text': 'Hello world' }"
-        })
+    load_model()  # <-- model loads only when needed
 
     data = request.get_json(silent=True)
     if not data or "text" not in data:
         return jsonify({"error": "Missing 'text' field"}), 400
 
     text = data["text"]
-    print("Received text:", text)
-
     seq = np.array([encode_text(text)])
     pred = model.predict(seq)[0]
 
@@ -70,10 +62,3 @@ def generate():
     encoded = base64.b64encode(buffer.getvalue()).decode("utf-8")
 
     return jsonify({"image": encoded})
-
-# -----------------------------
-# Run app
-# -----------------------------
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
