@@ -53,6 +53,10 @@ def generate():
     text = data["text"]
     seq = np.array([encode_text(text)])
     pred = model.predict(seq)[0]
+    # Add slight randomness
+    noise = np.random.normal(0, 0.03, pred.shape)
+    pred = np.clip(pred + noise, 0, 1)
+
 
     img = (pred.squeeze() * 255).astype("uint8")
     image = Image.fromarray(img)
@@ -62,3 +66,4 @@ def generate():
     encoded = base64.b64encode(buffer.getvalue()).decode("utf-8")
 
     return jsonify({"image": encoded})
+
