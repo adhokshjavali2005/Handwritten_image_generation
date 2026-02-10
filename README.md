@@ -5,7 +5,7 @@ It demonstrates an end-to-end AI system with a deployed backend and a modern fro
 
 🚀 Live Demo
 
-Frontend (Lovable): Handwritten AI Studio
+Frontend (Lovable): [Handwritten AI Studio](https://handwritten-image-generation.lovable.app)
 
 Backend (Render):
 https://handwritten-image-generation.onrender.com
